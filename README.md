@@ -4,70 +4,53 @@ A logistics marketplace where shippers post loads, carriers bid on them, and cus
 
 ---
 
-## Tech Stack
+## Project structure
 
-| Part           | Technology        |
-|----------------|-------------------|
-| Language       | Java 17           |
-| Backend        | Spring Boot 3.x   |
-| Database       | PostgreSQL        |
-| API            | REST (JSON)       |
-| Security       | Spring Security + JWT |
-| Data           | Spring Data JPA   |
-| Build          | Maven             |
-
----
-
-## Prerequisites
-
-- **Java 17** installed
-- **Maven** installed
-- **PostgreSQL** installed and running
-- A database created (e.g. `shipment_tracking`)
-
----
-
-## Run the Project
-
-### 1. Clone and open project
-
-```bash
-git clone <your-repo-url>
-cd Real-Time-Shipment-Tracking-Portal
+```
+Real-Time-Shipment-Tracking-Portal/
+├── backend/          # Spring Boot API (Java 17, PostgreSQL, JWT)
+├── frontend/         # React dashboard (tracking + map, Week 4)
+├── README.md         # This file
+└── WEEK1_README.md   # Week 1 API details
 ```
 
-### 2. Set database (optional)
+---
 
-By default the app uses:
+## Tech stack
 
-- URL: `jdbc:postgresql://localhost:5432/shipment_tracking`
-- Username: `postgres`
-- Password: `postgres`
+| Part      | Technology              |
+|-----------|-------------------------|
+| Backend   | Java 17, Spring Boot 3.x |
+| Database  | PostgreSQL              |
+| Security  | Spring Security + JWT    |
+| Frontend  | React (see `frontend/`) |
 
-To change, set environment variables or edit `src/main/resources/application.properties`:
+---
 
-- `DB_URL` – database URL
-- `DB_USERNAME` – database username
-- `DB_PASSWORD` – database password
+## Run the project
 
-### 3. Build and run
+### Backend
+
+```bash
+cd backend
+```
+
+Set DB (optional): env vars `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, or edit `backend/src/main/resources/application.properties`.
 
 ```bash
 mvn clean install
 mvn spring-boot:run
 ```
 
-Or only run (if already built):
+API: **http://localhost:8080**
 
-```bash
-mvn spring-boot:run
-```
+### Frontend
 
-App runs at: **http://localhost:8080**
+See `frontend/README.md`. (React app to be added in Week 4.)
 
 ---
 
-## Quick API Check
+## Quick API check
 
 - **Register (Shipper):**  
   `POST http://localhost:8080/api/auth/register`  
@@ -76,18 +59,17 @@ App runs at: **http://localhost:8080**
 - **Login:**  
   `POST http://localhost:8080/api/auth/login`  
   Body: `{ "email": "shipper@test.com", "password": "password123" }`  
-  Use the returned `token` in header: `Authorization: Bearer <token>`
+  Use returned `token` in header: `Authorization: Bearer <token>`
 
 - **Public tracking:**  
-  `GET http://localhost:8080/api/shipments/track/{trackingId}`  
-  (No login required)
+  `GET http://localhost:8080/api/shipments/track/{trackingId}`
 
 ---
 
-## Project Structure (main parts)
+## Backend structure (`backend/`)
 
 ```
-src/main/java/com/logistics/
+backend/src/main/java/com/logistics/
 ├── config/          # Security config
 ├── controller/      # REST APIs (auth, shipments, bids, marketplace)
 ├── dto/             # Request/Response objects
@@ -102,5 +84,5 @@ src/main/java/com/logistics/
 
 ## Notes
 
-- Use **environment variables** for `JWT_SECRET` and DB credentials in production; do not commit secrets.
-- For detailed Week 1 API usage and day-wise plan, see `WEEK1_README.md`.
+- Use **environment variables** for `JWT_SECRET` and DB credentials in production.
+- Week 1 details: `WEEK1_README.md` (paths there refer to code under `backend/`).
