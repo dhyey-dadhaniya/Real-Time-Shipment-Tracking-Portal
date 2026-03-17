@@ -51,6 +51,53 @@ public class BidService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<BidResponse> findBidsForShipmentAsShipper(Long shipmentId) {
+        User shipper = currentUserService.getCurrentUser();
+        if (shipper == null) throw new IllegalStateException("Not authenticated");
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Shipment not found"));
+        if (!shipment.getShipper().getId().equals(shipper.getId())) {
+            throw new IllegalArgumentException("Access denied: not your shipment");
+        }
+        return bidRepository.findAllByShipmentIdOrderByAmountAsc(shipmentId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public BidResponse acceptBidAsShipper(Long bidId) {
+        User shipper = currentUserService.getCurrentUser();
+        if (shipper == null) throw new IllegalStateException("Not authenticated");
+
+        Bid chosenBid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new IllegalArgumentException("Bid not found"));
+
+        Shipment shipment = chosenBid.getShipment();
+        if (!shipment.getShipper().getId().equals(shipper.getId())) {
+            throw new IllegalArgumentException("Access denied: not your shipment");
+        }
+        if (shipment.getStatus() != ShipmentStatus.POSTED) {
+            throw new IllegalArgumentException("Shipment is not open for accepting bids");
+        }
+
+        List<Bid> bidsForShipment = bidRepository.findAllByShipmentIdOrderByAmountAsc(shipment.getId());
+        for (Bid bid : bidsForShipment) {
+            if (bid.getId().equals(chosenBid.getId())) {
+                bid.setStatus(BidStatus.ACCEPTED);
+            } else {
+                bid.setStatus(BidStatus.REJECTED);
+            }
+        }
+
+        shipment.setStatus(ShipmentStatus.AWAITING_PICKUP);
+        bidRepository.saveAll(bidsForShipment);
+        shipmentRepository.save(shipment);
+
+        return toResponse(chosenBid);
+    }
+
     private BidResponse toResponse(Bid b) {
         return BidResponse.builder()
                 .id(b.getId())
