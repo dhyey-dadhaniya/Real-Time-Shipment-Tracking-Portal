@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/shipments/track/**").permitAll()
                         .requestMatchers("/api/shipments/**").hasRole("SHIPPER")
                         .requestMatchers("/api/bids/**").hasRole("CARRIER")
+                        .requestMatchers("/api/operations/**").hasRole("CARRIER")
                         .requestMatchers("/api/marketplace/**").hasRole("CARRIER")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()

@@ -30,4 +30,14 @@ public class BidController {
     public ResponseEntity<List<BidResponse>> myBids() {
         return ResponseEntity.ok(bidService.findMyBids());
     }
+
+    @GetMapping("/shipment/{shipmentId}")
+    public ResponseEntity<List<BidResponse>> bidsForShipment(@PathVariable Long shipmentId) {
+        return ResponseEntity.ok(bidService.findBidsForShipmentAsShipper(shipmentId));
+    }
+
+    @PostMapping("/{bidId}/accept")
+    public ResponseEntity<BidResponse> acceptBid(@PathVariable Long bidId) {
+        return ResponseEntity.ok(bidService.acceptBidAsShipper(bidId));
+    }
 }

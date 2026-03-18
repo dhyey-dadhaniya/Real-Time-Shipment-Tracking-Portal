@@ -2,7 +2,10 @@ package com.logistics.service;
 
 import com.logistics.dto.CreateShipmentRequest;
 import com.logistics.dto.ShipmentResponse;
+import com.logistics.dto.UpdateShipmentStatusRequest;
 import com.logistics.entity.Shipment;
+import com.logistics.entity.ShipmentStatus;
+import com.logistics.entity.UserRole;
 import com.logistics.entity.User;
 import com.logistics.repository.ShipmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +62,35 @@ public class ShipmentService {
         if (!shipment.getShipper().getId().equals(shipper.getId())) {
             throw new IllegalArgumentException("Access denied: not your shipment");
         }
+        return toResponse(shipment);
+    }
+
+    @Transactional
+    public ShipmentResponse updateStatus(Long id, UpdateShipmentStatusRequest request) {
+        User user = currentUserService.getCurrentUser();
+        if (user == null) throw new IllegalStateException("Not authenticated");
+        if (user.getRole() != UserRole.CARRIER) {
+            throw new IllegalArgumentException("Access denied: carrier only");
+        }
+
+        Shipment shipment = shipmentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Shipment not found: " + id));
+
+        ShipmentStatus current = shipment.getStatus();
+        ShipmentStatus next = request.getStatus();
+
+        if (current == ShipmentStatus.POSTED || current == ShipmentStatus.DELIVERED) {
+            throw new IllegalArgumentException("Shipment status cannot be updated from current state");
+        }
+        if (current == ShipmentStatus.AWAITING_PICKUP && next != ShipmentStatus.IN_TRANSIT) {
+            throw new IllegalArgumentException("AWAITING_PICKUP can only move to IN_TRANSIT");
+        }
+        if (current == ShipmentStatus.IN_TRANSIT && next != ShipmentStatus.DELIVERED) {
+            throw new IllegalArgumentException("IN_TRANSIT can only move to DELIVERED");
+        }
+
+        shipment.setStatus(next);
+        shipment = shipmentRepository.save(shipment);
         return toResponse(shipment);
     }
 
