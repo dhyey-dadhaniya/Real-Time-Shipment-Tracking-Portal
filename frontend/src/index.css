@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 247 249 252;
+    --card: 255 255 255;
+    --text: 15 23 42;
+    --muted: 100 116 139;
+    --border: 226 232 240;
+    --primary: 14 116 144; /* teal-ish logistics */
+    --primary-2: 2 132 199; /* sky accent */
+    --danger: 220 38 38;
+  }
+
+  .dark {
+    --bg: 10 14 23;
+    --card: 15 23 42;
+    --text: 226 232 240;
+    --muted: 148 163 184;
+    --border: 30 41 59;
+    --primary: 34 211 238;
+    --primary-2: 56 189 248;
+    --danger: 248 113 113;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-[rgb(var(--bg))] text-[rgb(var(--text))] antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-sm;
+  }
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-[rgb(var(--primary-2))] focus:ring-offset-2 focus:ring-offset-[rgb(var(--bg))];
+  }
+}

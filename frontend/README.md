@@ -1,71 +1,73 @@
-# Material Dashboard Shadcn Vue by Creative Tim
+# React + TypeScript + Vite
 
-## Overview
-A modern, minimalistic CRM template built with Vue 3, Vite, TypeScript, and shadcn-vue components. This template is designed for developers to quickly start building CRM applications with a clean, professional interface.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Project Information
-- **Created**: October 1, 2025
-- **Tech Stack**: Vue 3, Vite, TypeScript, shadcn-vue, Tailwind CSS
-- **Purpose**: Developer-ready CRM template with 7 complete pages
+Currently, two official plugins are available:
 
-## Pages
-1. **Dashboard** - Overview with key metrics and recent activity
-2. **Contacts** - Contact management with search functionality
-3. **Companies** - Company directory with details
-4. **Deals/Pipeline** - Kanban-style deal tracking
-5. **Tasks** - Task management with status tracking
-6. **Reports** - Analytics and performance metrics
-7. **Settings** - User preferences and configuration
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Architecture
-- **Framework**: Vue 3 with Composition API
-- **Build Tool**: Vite for fast development and optimized builds
-- **Styling**: Tailwind CSS with shadcn-vue design system
-- **Routing**: Vue Router with lazy-loaded routes
-- **Type Safety**: TypeScript throughout
-- **Charts**: Chart.js with vue-chartjs for interactive data visualization
+## React Compiler
 
-## Project Structure
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-src/
-├── assets/          # Global styles and Tailwind CSS
-├── components/      # Reusable UI components (shadcn-vue)
-├── layouts/         # Layout components (MainLayout with sidebar)
-├── lib/             # Utility functions
-├── router/          # Vue Router configuration
-├── views/           # Page components (7 pages)
-├── App.vue          # Root component
-└── main.ts          # Application entry point
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-## Key Features
-- Responsive sidebar navigation with icons
-- Clean, minimalistic design with consistent spacing
-- Card-based layouts for content organization
-- Tailwind CSS utility classes for styling
-- TypeScript for type safety
-- Fast HMR (Hot Module Replacement) with Vite
-
-## Development
-- **Dev Server**: `npm run dev` (runs on port 5000)
-- **Build**: `npm run build`
-- **Preview**: `npm run preview`
-
-## Customization
-The template is designed to be easily customizable:
-- Modify color scheme in `src/assets/index.css`
-- Add new pages in `src/views/` and update router
-- Create custom components in `src/components/`
-- Extend with state management (Pinia) if needed
-
-## Documentation
-Complete installation and customization guide available in `INSTALLATION.md`
-
-## Current State
-✅ All 7 pages implemented and functional
-✅ Sidebar navigation working
-✅ Minimalistic design with shadcn-vue components
-✅ Responsive layout
-✅ TypeScript configuration
-✅ Vite development server configured
-✅ Installation documentation complete

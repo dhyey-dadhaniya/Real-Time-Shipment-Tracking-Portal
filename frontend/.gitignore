@@ -11,8 +11,6 @@ node_modules
 dist
 dist-ssr
 *.local
-.replit
-replit.md
 
 # Editor directories and files
 .vscode/*
@@ -24,9 +22,3 @@ replit.md
 *.njsproj
 *.sln
 *.sw?
-
-build
-server/public
-vite.config.ts.*
-*.tar.gz
-build
