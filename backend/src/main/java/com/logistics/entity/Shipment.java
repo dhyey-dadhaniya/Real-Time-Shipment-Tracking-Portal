@@ -52,6 +52,10 @@ public class Shipment {
     @JoinColumn(name = "shipper_id", nullable = false)
     private User shipper;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "awarded_carrier_id")
+    private User awardedCarrier;
+
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Bid> bids = new ArrayList<>();

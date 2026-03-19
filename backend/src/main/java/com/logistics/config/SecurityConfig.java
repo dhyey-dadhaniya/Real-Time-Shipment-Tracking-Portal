@@ -37,10 +37,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers("/api/shipments/track/**").permitAll()
-                        .requestMatchers("/api/tracking/**").permitAll()
+                        .requestMatchers("/api/tracking/**").hasRole("CARRIER")
                         .requestMatchers("/api/shipments/**").hasRole("SHIPPER")
                         .requestMatchers("/api/bids/**").hasRole("CARRIER")
                         .requestMatchers("/api/operations/**").hasRole("CARRIER")
+                        .requestMatchers("/api/carrier/**").hasRole("CARRIER")
                         .requestMatchers("/api/marketplace/**").hasRole("CARRIER")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()

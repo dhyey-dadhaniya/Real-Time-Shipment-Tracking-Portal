@@ -91,6 +91,7 @@ public class BidService {
             }
         }
 
+        shipment.setAwardedCarrier(chosenBid.getCarrier());
         shipment.setStatus(ShipmentStatus.AWAITING_PICKUP);
         bidRepository.saveAll(bidsForShipment);
         shipmentRepository.save(shipment);

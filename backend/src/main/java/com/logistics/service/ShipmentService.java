@@ -65,6 +65,19 @@ public class ShipmentService {
         return toResponse(shipment);
     }
 
+    @Transactional(readOnly = true)
+    public List<ShipmentResponse> findAssignedShipmentsForCurrentCarrier() {
+        User carrier = currentUserService.getCurrentUser();
+        if (carrier == null) throw new IllegalStateException("Not authenticated");
+        if (carrier.getRole() != UserRole.CARRIER) {
+            throw new IllegalArgumentException("Access denied: carrier only");
+        }
+        return shipmentRepository.findAllByAwardedCarrierIdOrderByCreatedAtDesc(carrier.getId())
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public ShipmentResponse updateStatus(Long id, UpdateShipmentStatusRequest request) {
         User user = currentUserService.getCurrentUser();
@@ -75,6 +88,9 @@ public class ShipmentService {
 
         Shipment shipment = shipmentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Shipment not found: " + id));
+        if (shipment.getAwardedCarrier() == null || !shipment.getAwardedCarrier().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Access denied: not your assigned shipment");
+        }
 
         ShipmentStatus current = shipment.getStatus();
         ShipmentStatus next = request.getStatus();
@@ -104,6 +120,7 @@ public class ShipmentService {
                 .trackingId(s.getTrackingId())
                 .createdAt(s.getCreatedAt())
                 .shipperId(s.getShipper().getId())
+                .awardedCarrierId(s.getAwardedCarrier() == null ? null : s.getAwardedCarrier().getId())
                 .build();
     }
 }

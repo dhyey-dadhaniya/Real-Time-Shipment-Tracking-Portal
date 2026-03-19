@@ -19,4 +19,5 @@ public class ShipmentResponse {
     private String trackingId;
     private Instant createdAt;
     private Long shipperId;
+    private Long awardedCarrierId;
 }
