@@ -8,11 +8,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +30,11 @@ public class TrackingController {
             @Valid @RequestBody TrackingUpdateRequest request
     ) {
         return ResponseEntity.ok(trackingService.publishUpdate(shipmentId, request));
+    }
+
+    @GetMapping("/shipments/{shipmentId}/history")
+    public ResponseEntity<List<TrackingUpdateResponse>> history(@PathVariable Long shipmentId) {
+        return ResponseEntity.ok(trackingService.getRecentPoints(shipmentId));
     }
 
     @MessageMapping("/tracking/update")
