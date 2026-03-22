@@ -14,7 +14,7 @@ npm run dev
 
 Dev server: **http://localhost:5173** (or next free port).
 
-Set **`VITE_API_BASE_URL`** in `.env` (e.g. `http://localhost:8080/api/`) so REST calls hit the backend. WebSocket uses **`/ws`** on the **same origin** as the dev server; Vite proxies `/ws` to the backend (see `vite.config.ts`).
+Set **`VITE_API_BASE_URL`** in `.env` to the backend **origin** (e.g. `http://localhost:8080`), or leave it **empty** so `/api` and `/ws` go through the Vite dev proxy (`vite.config.ts`). API paths in code already start with `/api`.
 
 ---
 
@@ -37,7 +37,7 @@ Set **`VITE_API_BASE_URL`** in `.env` (e.g. `http://localhost:8080/api/`) so RES
 - **Manual reconnect:** increments an internal session key → `deactivate()` / new `activate()` cycle.
 - **REST:** `GET /api/tracking/shipments/{id}/history` bootstraps the polyline; STOMP appends live points.
 
-Full sequence diagrams and security notes: **[../docs/WEBSOCKET_ARCHITECTURE.md](../docs/WEBSOCKET_ARCHITECTURE.md)**.
+Server-side WebSocket config: `backend/.../config/WebSocketConfig.java` and `WebSocketAuthChannelInterceptor.java`.
 
 ---
 

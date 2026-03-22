@@ -1,57 +1,86 @@
-# Real-Time Shipment Tracking Portal
+# 🚚 Real-Time Shipment Tracking Portal
 
-A full-stack logistics platform where shippers publish loads, carriers bid and operate assigned shipments, and stakeholders monitor movement on a **Leaflet** map with optional **STOMP/WebSocket** live updates.
+## 📌 Description
 
-## Features
+A full-stack logistics platform where **shippers** manage loads and marketplace bidding, **carriers** run assigned shipments and publish GPS checkpoints, and **stakeholders** follow routes on an interactive **Leaflet** map. The app uses a **Spring Boot** REST API, **PostgreSQL**, **JWT** auth, and optional **STOMP/WebSocket** updates for live tracking.
 
-- **Authentication** — JWT-based API security; role separation (shipper / carrier).
-- **Marketplace** — Carriers discover open loads and submit bids.
-- **Operations** — Shippers accept bids; carriers update shipment status and publish GPS checkpoints.
-- **Tracking** — REST history plus broker broadcasts on `/topic/shipments/{shipmentId}`.
-- **Public tracking** — No account required: open `/track/{trackingId}` using the shipment’s public tracking code (`GET /api/shipments/track/{trackingId}` and `/history`).
+## 🚀 Features
 
-## Architecture
+* 🔐 JWT-based authentication with shipper / carrier roles
+* 🛒 Marketplace for open loads and bidding
+* 📍 Shipment tracking with REST history and carrier GPS updates
+* 🗺️ Map views (react-leaflet) for tracking and real-time follow-up
+* ⚡ Live updates via WebSocket/STOMP on `/topic/shipments/{shipmentId}`
+* 🌐 **Public tracking** — no account: `/track` and `/track/{trackingId}` in the UI; public REST endpoints for snapshot and history
+* 📱 Responsive UI (Tailwind) for dashboard, marketplace, carriers, and realtime pages
 
-| Layer | Stack |
-|--------|--------|
-| API | Spring Boot 3, Spring Security, JPA, PostgreSQL |
-| Real-time | Spring WebSocket / STOMP, simple broker |
-| UI | React 19, TypeScript, Vite, Tailwind, react-leaflet |
+## 🛠️ Tech Stack
 
-Detailed WebSocket design: [docs/WEBSOCKET_ARCHITECTURE.md](docs/WEBSOCKET_ARCHITECTURE.md).
+**Backend**
 
-## Repository layout
+* Java 17
+* Spring Boot 3.2 (Web, Security, Data JPA, WebSocket)
+* PostgreSQL
+* Maven
+* JWT (jjwt)
+
+**Frontend**
+
+* React 19
+* TypeScript
+* Vite 8
+* Tailwind CSS
+* react-leaflet, Leaflet
+* Axios, Zustand, `@stomp/stompjs`, React Router 7
+
+## 📂 Project Structure
 
 ```
-├── backend/          # Spring Boot application
-├── frontend/         # Vite + React SPA
-├── docs/             # Architecture and integration notes
-└── WEEK1_README.md   # Supplementary API reference (early milestones)
+Real-Time-Shipment-Tracking-Portal/
+├── backend/
+│   ├── pom.xml
+│   └── src/
+│       ├── main/java/com/logistics/   # REST, JPA, security, WebSocket config
+│       └── test/                      # JUnit (e.g. public track API)
+├── frontend/
+│   ├── index.html
+│   ├── vite.config.ts                 # proxy: /api, /ws, /nominatim
+│   ├── package.json
+│   └── src/
+│       ├── api/
+│       ├── pages/
+│       ├── hooks/
+│       └── components/
+├── README.md
+├── backend/README.md
+└── frontend/README.md
 ```
 
-## Prerequisites
+## ⚙️ Installation
 
-- **JDK 17+**
-- **Node.js 20+** (or current LTS)
-- **PostgreSQL** (local database for development)
+1. **Clone the repository**
 
-## Configuration
+```bash
+git clone https://github.com/your-username/Real-Time-Shipment-Tracking-Portal.git
+cd Real-Time-Shipment-Tracking-Portal
+```
 
-- **Backend** — `backend/.env` or environment variables: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` (see [backend/README.md](backend/README.md)).
-- **Frontend** — `frontend/.env`: `VITE_API_BASE_URL` (e.g. `http://localhost:8080/` for direct API calls, or leave empty to use the Vite dev proxy).
+2. **Database** — Create a PostgreSQL database (e.g. `shipment_tracking`).
 
-## Run locally
+3. **Backend** — Configure env (or `backend/.env`): `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` (see [backend/README.md](backend/README.md)).
 
-**API**
+4. **Frontend** — Copy `frontend/.env.example` to `frontend/.env`. For local dev you can leave `VITE_API_BASE_URL` empty so Vite proxies `/api` and `/ws` to the backend.
+
+5. **Install & run backend**
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-Default: `http://localhost:8080`
+API: [http://localhost:8080](http://localhost:8080)
 
-**Web app**
+6. **Install & run frontend**
 
 ```bash
 cd frontend
@@ -59,18 +88,28 @@ npm install
 npm run dev
 ```
 
-Dev server proxies `/api` and `/ws` to the backend (see `frontend/vite.config.ts`).
+App: [http://localhost:5173](http://localhost:5173) (or next free port)
 
-## Automated tests
+## ▶️ Usage
 
-**Backend (JUnit 5)**
+* Register as shipper or carrier, then log in.
+* Use **Dashboard**, **Shipment tracking**, **Marketplace**, **Carriers**, and **Realtime** from the main layout (after login).
+* **Public track:** open `/track`, enter a tracking ID, or go directly to `/track/{trackingId}` — no login required.
+* Carriers publish location updates via the API; subscribed clients see live points on the map over WebSocket where enabled.
+
+## 📸 Screenshots
+
+image.jpg
+
+
+## 🧪 Testing
+
+**Backend (JUnit 5, H2 test profile)**
 
 ```bash
 cd backend
 mvn test
 ```
-
-Uses the `test` profile with an in-memory **H2** database (`src/test/resources/application-test.properties`).
 
 **Frontend (Vitest)**
 
@@ -79,26 +118,16 @@ cd frontend
 npm test
 ```
 
-**CI** — On push and pull request, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs backend tests and frontend build/tests.
+For watch mode: `npm run test:watch` in `frontend/`.
 
-## API highlights
+## 🤝 Contributing
 
-| Use case | Method & path |
-|----------|----------------|
-| Register / login | `POST /api/auth/register`, `POST /api/auth/login` |
-| Public shipment snapshot | `GET /api/shipments/track/{trackingId}` |
-| Public GPS history | `GET /api/shipments/track/{trackingId}/history` |
-| Authenticated history | `GET /api/tracking/shipments/{id}/history` |
-| Carrier GPS update | `POST /api/tracking/shipments/{id}` |
+Pull requests are welcome. For larger changes, open an issue first to discuss scope.
 
-Full Week-1 style reference: [WEEK1_README.md](WEEK1_README.md).
+## 📜 License
 
-## Documentation
+This project is licensed under the **MIT License** — add or update a `LICENSE` file in the repo root if you publish it.
 
-- [backend/README.md](backend/README.md) — Data model, security, REST and WebSocket entry points.
-- [frontend/README.md](frontend/README.md) — UI modules, env vars, STOMP client behavior.
-- [docs/WEBSOCKET_ARCHITECTURE.md](docs/WEBSOCKET_ARCHITECTURE.md) — Topics, JWT on `CONNECT`, reconnection.
+## 👨‍💻 Author
 
-## License
-
-This project is provided as sample / coursework source. Add a `LICENSE` file if you distribute it.
+* **Dhyey Dadhaniya**

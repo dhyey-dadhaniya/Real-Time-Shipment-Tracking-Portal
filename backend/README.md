@@ -27,7 +27,7 @@ Spring Boot API for the logistics marketplace. Covers **Week 1** (schema & auth)
 
 **Code:** `config/WebSocketConfig.java`, `config/WebSocketAuthChannelInterceptor.java`, `service/TrackingService.java` (`SimpMessagingTemplate#convertAndSend`).
 
-**Full architecture write-up (PDF Week 4):** [../docs/WEBSOCKET_ARCHITECTURE.md](../docs/WEBSOCKET_ARCHITECTURE.md)
+**Related:** WebSocket classes under `config/WebSocketConfig.java` and `WebSocketAuthChannelInterceptor.java`; frontend hook `frontend/src/hooks/realtime-tracking/useRealtimeTrackingPage.ts`.
 
 ---
 
