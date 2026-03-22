@@ -1,84 +1,63 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
-import { Card } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
-import { useDataStore } from '../store/dataStore'
-import type { Shipment, ShipmentStatus } from '../models'
-
-function tone(status: ShipmentStatus) {
-  switch (status) {
-    case 'DELIVERED':
-      return 'success' as const
-    case 'IN_TRANSIT':
-      return 'info' as const
-    case 'AWAITING_PICKUP':
-      return 'warning' as const
-    default:
-      return 'neutral' as const
-  }
-}
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { ShipmentStatusBadge } from '@/components/features/dashboard'
+import { useShipmentTrackingPage } from '@/hooks/shipment-tracking/useShipmentTrackingPage'
+import { useAuth } from '@/contexts/auth-context'
 
 export function ShipmentTrackingPage() {
-  const shipmentsState = useDataStore((s) => s.shipments)
-  const loadShipments = useDataStore((s) => s.loadShipments)
-  const trackingByShipmentId = useDataStore((s) => s.trackingByShipmentId)
-  const loadTracking = useDataStore((s) => s.loadTracking)
+  const { hasRole } = useAuth()
+  const t = useShipmentTrackingPage()
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const polyline = useMemo(
+    () => t.trackingPoints.map((p) => [p.lat, p.lng] as [number, number]),
+    [t.trackingPoints],
+  )
+  const lastPoint = t.trackingPoints[t.trackingPoints.length - 1]
 
-  useEffect(() => {
-    void loadShipments()
-  }, [loadShipments])
-
-  useEffect(() => {
-    const first = shipmentsState.data[0]?.id
-    if (!selectedId && first) setSelectedId(first)
-  }, [selectedId, shipmentsState.data])
-
-  useEffect(() => {
-    if (!selectedId) return
-    void loadTracking(selectedId)
-  }, [loadTracking, selectedId])
-
-  const selectedShipment = useMemo<Shipment | null>(() => {
-    if (!selectedId) return null
-    return shipmentsState.data.find((s) => s.id === selectedId) ?? null
-  }, [selectedId, shipmentsState.data])
-
-  const tracking = selectedId ? trackingByShipmentId[selectedId]?.data ?? [] : []
-  const polyline = tracking.map((p) => [p.lat, p.lng] as [number, number])
-  const lastPoint = tracking[tracking.length - 1]
+  if (!hasRole('SHIPPER')) {
+    return (
+      <div className="mx-auto max-w-[1400px] space-y-4">
+        <div className="text-xl font-semibold">Shipment tracking</div>
+        <p className="text-sm text-[rgb(var(--muted))]">
+          Map uses <code className="text-xs">GET /api/tracking/shipments/{'{id}'}/history</code>. Sign in as
+          a <strong>SHIPPER</strong> (shipment owner).
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6">
       <div>
-        <div className="text-xl font-semibold">Shipment Tracking</div>
+        <div className="text-xl font-semibold">Shipment tracking</div>
         <div className="mt-1 text-sm text-[rgb(var(--muted))]">
-          Map view with markers and a highlighted route (dummy + mocked API).
+          Route from <code className="text-xs">GET /api/tracking/shipments/&#123;id&#125;/history</code>.
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
         <Card className="p-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold">Shipments</div>
+            <div className="text-sm font-semibold">Your shipments</div>
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => void loadShipments()}
-              isLoading={shipmentsState.loading}
+              onClick={() => void t.refetchShipments()}
+              isLoading={t.shipmentsLoading}
             >
               Refresh
             </Button>
           </div>
           <div className="mt-3 space-y-2">
-            {shipmentsState.data.map((s) => {
-              const active = s.id === selectedId
+            {t.shipments.map((s) => {
+              const active = s.id === t.selectedId
               return (
                 <button
                   key={s.id}
-                  onClick={() => setSelectedId(s.id)}
+                  type="button"
+                  onClick={() => t.setSelectedId(s.id)}
                   className={[
                     'w-full rounded-2xl border p-3 text-left transition focus-ring',
                     active
@@ -90,48 +69,53 @@ export function ShipmentTrackingPage() {
                     <div>
                       <div className="text-sm font-semibold">{s.id}</div>
                       <div className="mt-1 text-xs text-[rgb(var(--muted))]">
-                        {s.originCity} → {s.destinationCity}
+                        {s.origin} → {s.destination}
                       </div>
                     </div>
-                    <Badge tone={tone(s.status)}>{s.status}</Badge>
+                    <ShipmentStatusBadge status={s.status} />
                   </div>
-                  <div className="mt-2 text-xs text-[rgb(var(--muted))]">
-                    Tracking: {s.trackingCode}
-                  </div>
+                  <div className="mt-2 text-xs text-[rgb(var(--muted))]">Tracking: {s.trackingId}</div>
                 </button>
               )
             })}
-            {shipmentsState.loading ? (
+            {t.shipmentsLoading ? (
               <div className="text-sm text-[rgb(var(--muted))]">Loading…</div>
             ) : null}
-            {shipmentsState.error ? (
-              <div className="text-sm text-rose-600 dark:text-rose-300">
-                {shipmentsState.error}
-              </div>
+            {t.shipmentsError ? (
+              <div className="text-sm text-rose-600 dark:text-rose-300">{t.shipmentsError}</div>
             ) : null}
           </div>
+
         </Card>
 
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between border-b border-[rgb(var(--border))] p-4">
             <div>
               <div className="text-sm font-semibold">
-                {selectedShipment ? `${selectedShipment.originCity} → ${selectedShipment.destinationCity}` : '—'}
+                {t.selectedShipment
+                  ? `${t.selectedShipment.origin} → ${t.selectedShipment.destination}`
+                  : '—'}
               </div>
               <div className="mt-1 text-xs text-[rgb(var(--muted))]">
-                {selectedShipment ? `Shipment ${selectedShipment.id} • ${selectedShipment.weightKg} kg` : 'Select a shipment'}
+                {t.selectedShipment
+                  ? `Shipment ${t.selectedShipment.id} • ${t.selectedShipment.weightKg} kg`
+                  : 'Select a shipment'}
               </div>
             </div>
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => selectedId && void loadTracking(selectedId)}
-              isLoading={selectedId ? trackingByShipmentId[selectedId]?.loading : false}
-              disabled={!selectedId}
+              onClick={() => void t.refetchHistory()}
+              isLoading={t.historyLoading}
+              disabled={t.selectedId == null}
             >
               Reload route
             </Button>
           </div>
+
+          {t.historyError ? (
+            <div className="px-4 py-2 text-sm text-rose-600 dark:text-rose-300">{t.historyError}</div>
+          ) : null}
 
           <div className="h-[520px]">
             <MapContainer
@@ -160,4 +144,3 @@ export function ShipmentTrackingPage() {
     </div>
   )
 }
-

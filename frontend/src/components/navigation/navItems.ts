@@ -1,5 +1,4 @@
 import {
-  Boxes,
   ChartNoAxesCombined,
   MapPinned,
   ShoppingBag,
@@ -12,7 +11,6 @@ export const navItems = [
   { to: '/tracking', label: 'Shipment Tracking', icon: MapPinned },
   { to: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { to: '/carriers', label: 'Carrier Management', icon: Truck },
-  { to: '/orders', label: 'Order Management', icon: Boxes },
   { to: '/realtime', label: 'Real-time Tracking', icon: Waves },
 ] as const
 

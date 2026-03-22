@@ -37,9 +37,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers("/api/shipments/track/**").permitAll()
-                        .requestMatchers("/api/tracking/**").hasRole("CARRIER")
+                        // Shipper: view bids on own shipments and accept a bid (service layer enforces ownership)
+                        .requestMatchers(HttpMethod.GET, "/api/bids/shipment/**").hasRole("SHIPPER")
+                        .requestMatchers(HttpMethod.POST, "/api/bids/*/accept").hasRole("SHIPPER")
+                        // Carrier: place bid and list own bids
+                        .requestMatchers(HttpMethod.POST, "/api/bids").hasRole("CARRIER")
+                        .requestMatchers(HttpMethod.GET, "/api/bids").hasRole("CARRIER")
+                        // Tracking: carrier posts updates; shipper or carrier can read history (service enforces)
+                        .requestMatchers(HttpMethod.GET, "/api/tracking/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/tracking/**").hasRole("CARRIER")
                         .requestMatchers("/api/shipments/**").hasRole("SHIPPER")
-                        .requestMatchers("/api/bids/**").hasRole("CARRIER")
                         .requestMatchers("/api/operations/**").hasRole("CARRIER")
                         .requestMatchers("/api/carrier/**").hasRole("CARRIER")
                         .requestMatchers("/api/marketplace/**").hasRole("CARRIER")

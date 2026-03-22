@@ -1,129 +1,92 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
-import { Card } from '../components/ui/Card'
-import { Badge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { useDataStore } from '../store/dataStore'
-
-type LivePoint = { id: string; lat: number; lng: number; route: [number, number][]; idx: number }
-
-const cityCoords: Record<string, [number, number]> = {
-  Bengaluru: [12.9716, 77.5946],
-  Mysuru: [12.2958, 76.6394],
-  Chennai: [13.0827, 80.2707],
-  Hyderabad: [17.385, 78.4867],
-  Hubballi: [15.3647, 75.124],
-  Mangaluru: [12.9141, 74.856],
-}
-
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t
-}
-
-function buildRoute(from: [number, number], to: [number, number]) {
-  const steps = 18
-  const pts: [number, number][] = []
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps
-    // add slight wobble for realism
-    const wobble = Math.sin(t * Math.PI * 3) * 0.08
-    pts.push([lerp(from[0], to[0], t) + wobble, lerp(from[1], to[1], t) - wobble])
-  }
-  return pts
-}
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { ShipmentStatusBadge } from '@/components/features/dashboard'
+import { useRealtimeTrackingPage } from '@/hooks/realtime-tracking/useRealtimeTrackingPage'
 
 export function RealtimeTrackingPage() {
-  const shipments = useDataStore((s) => s.shipments)
-  const loadShipments = useDataStore((s) => s.loadShipments)
+  const rt = useRealtimeTrackingPage()
 
-  const [running, setRunning] = useState(true)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [live, setLive] = useState<LivePoint[]>([])
-  const timer = useRef<number | null>(null)
+  const selectedShipment = useMemo(
+    () => rt.rows.find((s) => s.id === rt.selectedId) ?? null,
+    [rt.rows, rt.selectedId],
+  )
 
-  useEffect(() => {
-    void loadShipments()
-  }, [loadShipments])
-
-  useEffect(() => {
-    if (!shipments.data.length) return
-    const seed = shipments.data
-      .filter((s) => s.status === 'IN_TRANSIT' || s.status === 'AWAITING_PICKUP')
-      .slice(0, 3)
-      .map((s) => {
-        const from = cityCoords[s.originCity] ?? cityCoords.Bengaluru
-        const to = cityCoords[s.destinationCity] ?? cityCoords.Chennai
-        const route = buildRoute(from, to)
-        return { id: s.id, lat: route[0][0], lng: route[0][1], route, idx: 0 }
-      })
-    setLive(seed)
-    setSelectedId((prev) => prev ?? seed[0]?.id ?? null)
-  }, [shipments.data])
-
-  useEffect(() => {
-    if (!running) return
-    timer.current = window.setInterval(() => {
-      setLive((points) =>
-        points.map((p) => {
-          const nextIdx = (p.idx + 1) % p.route.length
-          const [lat, lng] = p.route[nextIdx]
-          return { ...p, idx: nextIdx, lat, lng }
-        }),
-      )
-    }, 2000)
-
-    return () => {
-      if (timer.current) window.clearInterval(timer.current)
-    }
-  }, [running])
-
-  const selected = useMemo(() => live.find((p) => p.id === selectedId) ?? null, [live, selectedId])
-  const selectedRoute = selected?.route ?? []
+  if (!rt.isCarrier) {
+    return (
+      <div className="mx-auto max-w-[1400px] space-y-4">
+        <div className="text-xl font-semibold">Real-time tracking</div>
+        <p className="text-sm text-[rgb(var(--muted))]">
+          WebSocket <code className="text-xs">/ws</code> topic{' '}
+          <code className="text-xs">/topic/shipments/&#123;id&#125;</code> plus tracking history. Sign in as
+          a <strong>CARRIER</strong>.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-xl font-semibold">Real-time Tracking</div>
+          <div className="text-xl font-semibold">Real-time tracking</div>
           <div className="mt-1 text-sm text-[rgb(var(--muted))]">
-            WebSocket simulation: updates every 2 seconds (client-side).
+            STOMP over WebSocket (JWT on CONNECT) + REST history. Live points: {rt.liveCount}
           </div>
         </div>
-        <Button variant={running ? 'secondary' : 'primary'} onClick={() => setRunning((v) => !v)}>
-          {running ? 'Pause' : 'Resume'}
+        <Button size="sm" variant="secondary" onClick={() => void rt.refetchHistory()} isLoading={rt.historyLoading}>
+          Reload history
         </Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
         <Card className="p-4">
-          <div className="text-sm font-semibold">Live Shipments</div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold">Assigned shipments</div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => void rt.refetchShipments()}
+              isLoading={rt.shipmentsLoading}
+            >
+              Refresh
+            </Button>
+          </div>
           <div className="mt-3 space-y-2">
-            {live.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedId(p.id)}
-                className={[
-                  'w-full rounded-2xl border p-3 text-left transition focus-ring',
-                  p.id === selectedId
-                    ? 'border-[rgb(var(--primary-2))] bg-[rgb(var(--primary-2))]/5'
-                    : 'border-[rgb(var(--border))] hover:bg-black/5 dark:hover:bg-white/5',
-                ].join(' ')}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold">{p.id}</div>
-                  <Badge tone={running ? 'info' : 'neutral'}>
-                    {running ? 'LIVE' : 'PAUSED'}
-                  </Badge>
-                </div>
-                <div className="mt-2 text-xs text-[rgb(var(--muted))]">
-                  Lat {p.lat.toFixed(4)} • Lng {p.lng.toFixed(4)}
-                </div>
-              </button>
-            ))}
-            {!live.length ? (
-              <div className="text-sm text-[rgb(var(--muted))]">
-                Loading shipments…
-              </div>
+            {rt.rows.map((s) => {
+              const active = s.id === rt.selectedId
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => rt.setSelectedId(s.id)}
+                  className={[
+                    'w-full rounded-2xl border p-3 text-left transition focus-ring',
+                    active
+                      ? 'border-[rgb(var(--primary-2))] bg-[rgb(var(--primary-2))]/5'
+                      : 'border-[rgb(var(--border))] hover:bg-black/5 dark:hover:bg-white/5',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold">{s.id}</div>
+                    <Badge tone="info">WS</Badge>
+                  </div>
+                  <div className="mt-1 text-xs text-[rgb(var(--muted))]">
+                    {s.origin} → {s.destination}
+                  </div>
+                  <div className="mt-2">
+                    <ShipmentStatusBadge status={s.status} />
+                  </div>
+                </button>
+              )
+            })}
+            {!rt.rows.length && !rt.shipmentsLoading ? (
+              <div className="text-sm text-[rgb(var(--muted))]">No assigned shipments.</div>
+            ) : null}
+            {rt.shipmentsError ? (
+              <div className="text-sm text-rose-600 dark:text-rose-300">{rt.shipmentsError}</div>
             ) : null}
           </div>
         </Card>
@@ -131,15 +94,17 @@ export function RealtimeTrackingPage() {
         <Card className="overflow-hidden">
           <div className="border-b border-[rgb(var(--border))] p-4">
             <div className="text-sm font-semibold">
-              {selected ? `Route for ${selected.id}` : 'Select a live shipment'}
+              {selectedShipment ? `Shipment #${selectedShipment.id}` : 'Select a shipment'}
             </div>
             <div className="mt-1 text-xs text-[rgb(var(--muted))]">
-              Marker moves along the polyline to simulate telematics pings.
+              {rt.lastPosition
+                ? `Last: ${rt.lastPosition[0].toFixed(4)}, ${rt.lastPosition[1].toFixed(4)}`
+                : 'Waiting for tracking points…'}
             </div>
           </div>
           <div className="h-[520px]">
             <MapContainer
-              center={selected ? [selected.lat, selected.lng] : [12.9716, 77.5946]}
+              center={rt.lastPosition ?? [12.9716, 77.5946]}
               zoom={6}
               style={{ height: '100%', width: '100%' }}
             >
@@ -147,14 +112,14 @@ export function RealtimeTrackingPage() {
                 attribution='&copy; OpenStreetMap contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-
-              {selectedRoute.length ? (
-                <Polyline positions={selectedRoute} pathOptions={{ color: '#22d3ee', weight: 4 }} />
-              ) : null}
-
-              {live.map((p) => (
-                <Marker key={p.id} position={[p.lat, p.lng]} />
-              ))}
+              {rt.pathPositions.length ? (
+                <>
+                  <Polyline positions={rt.pathPositions} pathOptions={{ color: '#22d3ee', weight: 4 }} />
+                  <Marker position={rt.pathPositions[rt.pathPositions.length - 1]} />
+                </>
+              ) : (
+                <Marker position={[12.9716, 77.5946]} />
+              )}
             </MapContainer>
           </div>
         </Card>
@@ -162,4 +127,3 @@ export function RealtimeTrackingPage() {
     </div>
   )
 }
-

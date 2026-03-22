@@ -24,17 +24,15 @@ export function TH({ children }: PropsWithChildren) {
   return <th className="px-4 py-3 font-medium">{children}</th>
 }
 
-export function THCell({
-  children,
-  className,
-}: PropsWithChildren<{ className?: string }>) {
-  return <th className={['px-4 py-3 font-medium', className ?? ''].join(' ')}>{children}</th>
-}
-
 export function TD({
   children,
   className,
-}: PropsWithChildren<{ className?: string }>) {
-  return <td className={['px-4 py-3', className ?? ''].join(' ')}>{children}</td>
+  colSpan,
+}: PropsWithChildren<{ className?: string; colSpan?: number }>) {
+  return (
+    <td className={['px-4 py-3', className ?? ''].join(' ')} colSpan={colSpan}>
+      {children}
+    </td>
+  )
 }
 
