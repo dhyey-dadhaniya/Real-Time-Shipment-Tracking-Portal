@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# Frontend – Real-Time Shipment Tracking Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + TypeScript + Vite + Tailwind. Consumes the Spring Boot API and, for carriers, maintains a **STOMP/WebSocket** subscription for live GPS points on the map (**Leaflet**).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Dev server: **http://localhost:5173** (or next free port).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Set **`VITE_API_BASE_URL`** in `.env` (e.g. `http://localhost:8080/api/`) so REST calls hit the backend. WebSocket uses **`/ws`** on the **same origin** as the dev server; Vite proxies `/ws` to the backend (see `vite.config.ts`).
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Week 4 deliverables (per project PDF)
+
+| Requirement | Implementation |
+|---------------|------------------|
+| React dashboard + map | Shipper tracking, carrier real-time page, marketplace, etc. |
+| Leaflet map | `react-leaflet` + OpenStreetMap tiles |
+| WebSocket on map | `useRealtimeTrackingPage` — STOMP subscribe to `/topic/shipments/{id}` |
+| Graceful reconnect | `@stomp/stompjs`: exponential backoff, heartbeats, intentional close on unmount; UI shows **Live / Reconnecting / Error** + **Reconnect WebSocket** |
+
+---
+
+## Live tracking hook (`src/hooks/realtime-tracking/useRealtimeTrackingPage.ts`)
+
+- **CONNECT** headers: `Authorization: Bearer <JWT>` (matches `WebSocketAuthChannelInterceptor` on the server).
+- **Auto-reconnect:** `reconnectTimeMode: EXPONENTIAL`, capped by `maxReconnectDelay`.
+- **Heartbeats:** 10s in/out to detect stale connections.
+- **Manual reconnect:** increments an internal session key → `deactivate()` / new `activate()` cycle.
+- **REST:** `GET /api/tracking/shipments/{id}/history` bootstraps the polyline; STOMP appends live points.
+
+Full sequence diagrams and security notes: **[../docs/WEBSOCKET_ARCHITECTURE.md](../docs/WEBSOCKET_ARCHITECTURE.md)**.
+
+---
+
+## Build
+
+```bash
+npm run build
+npm run preview
 ```
+
+For `preview`, configure your host or env so `/api` and `/ws` still reach the backend (or use a single reverse proxy in production).

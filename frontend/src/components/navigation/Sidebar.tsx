@@ -1,8 +1,11 @@
+import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { navItems } from './navItems'
 import { useUiStore } from '../../store/uiStore'
 import { Button } from '../ui/Button'
+import { useAuth } from '@/contexts/auth-context'
+import type { UserRole } from '@/types'
 
 function cx({ isActive }: { isActive: boolean }) {
   return [
@@ -16,6 +19,13 @@ function cx({ isActive }: { isActive: boolean }) {
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
   const toggle = useUiStore((s) => s.toggleSidebar)
+  const { user } = useAuth()
+
+  const visibleNav = useMemo(() => {
+    const role = user?.role as UserRole | undefined
+    if (!role) return navItems
+    return navItems.filter((item) => item.roles.includes(role))
+  }, [user?.role])
 
   return (
     <aside
@@ -51,7 +61,7 @@ export function Sidebar() {
         </div>
 
         <div className="mt-6 flex-1 space-y-1">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const Icon = item.icon
             return (
               <NavLink key={item.to} to={item.to} className={cx} end>
@@ -64,8 +74,18 @@ export function Sidebar() {
 
         {!collapsed ? (
           <div className="mt-4 rounded-2xl border border-[rgb(var(--border))] bg-gradient-to-br from-black/5 to-transparent p-4 text-xs text-[rgb(var(--muted))] dark:from-white/5">
-            Tip: Open <span className="font-medium">Real-time Tracking</span> to
-            see simulated WebSocket location updates.
+            {user?.role === 'CARRIER' ? (
+              <>
+                Tip: Open <span className="font-medium">Real-time Tracking</span> for live map updates on
+                assigned shipments.
+              </>
+            ) : (
+              <>
+                Tip: Use <span className="font-medium">Marketplace</span> to post loads and review carrier
+                bids. For carrier tools, sign in with a <span className="font-medium">Carrier</span>{' '}
+                account (e.g. another browser).
+              </>
+            )}
           </div>
         ) : null}
       </div>

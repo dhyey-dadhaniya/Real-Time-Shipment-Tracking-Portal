@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { API_ENDPOINTS } from '@/api/endpoints'
 import { useAuth } from '@/contexts/auth-context'
 import { useAPI } from '@/hooks/useApi'
@@ -32,17 +32,30 @@ export function useMarketplacePage() {
     key: `bids-${isCarrier}`,
   })
 
-  const bidsForShipment = useAPI<BidResponseDto[]>(
-    () =>
-      selectedShipmentId != null
-        ? API_ENDPOINTS.BIDS.FOR_SHIPMENT(selectedShipmentId)
-        : '/api/bids/shipment/0',
-    {
-      method: 'GET',
-      immediate: isShipper && selectedShipmentId != null,
-      key: selectedShipmentId,
-    },
-  )
+  /** String URL only — a function endpoint changes identity every render and retriggers useAPI's effect in a tight loop (bids stuck loading / empty). */
+  const bidsForShipmentUrl =
+    selectedShipmentId != null
+      ? API_ENDPOINTS.BIDS.FOR_SHIPMENT(selectedShipmentId)
+      : API_ENDPOINTS.BIDS.FOR_SHIPMENT(0)
+
+  const bidsForShipment = useAPI<BidResponseDto[]>(bidsForShipmentUrl, {
+    method: 'GET',
+    immediate: isShipper && selectedShipmentId != null,
+    key: selectedShipmentId,
+  })
+
+  useEffect(() => {
+    if (!isShipper) return
+    const rows = myShipments.data ?? []
+    if (rows.length === 0) return
+    if (selectedShipmentId == null) {
+      setSelectedShipmentId(rows[0].id)
+      return
+    }
+    if (!rows.some((r) => r.id === selectedShipmentId)) {
+      setSelectedShipmentId(rows[0].id)
+    }
+  }, [isShipper, myShipments.data, selectedShipmentId])
 
   const createShipment = useAPI<ShipmentResponseDto>(API_ENDPOINTS.SHIPMENTS.CREATE, {
     method: 'POST',

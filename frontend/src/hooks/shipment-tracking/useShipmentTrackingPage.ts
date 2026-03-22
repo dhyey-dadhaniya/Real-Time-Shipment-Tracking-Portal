@@ -25,17 +25,14 @@ export function useShipmentTrackingPage() {
 
   const shipments = useAPI<ShipmentResponseDto[]>(API_ENDPOINTS.SHIPMENTS.LIST)
 
-  const history = useAPI<TrackingUpdateResponseDto[]>(
-    () =>
-      selectedId != null
-        ? API_ENDPOINTS.TRACKING.HISTORY(selectedId)
-        : API_ENDPOINTS.TRACKING.HISTORY(0),
-    {
-      method: 'GET',
-      immediate: selectedId != null,
-      key: selectedId,
-    },
-  )
+  const historyUrl =
+    selectedId != null ? API_ENDPOINTS.TRACKING.HISTORY(selectedId) : API_ENDPOINTS.TRACKING.HISTORY(0)
+
+  const history = useAPI<TrackingUpdateResponseDto[]>(historyUrl, {
+    method: 'GET',
+    immediate: selectedId != null,
+    key: selectedId,
+  })
 
   useEffect(() => {
     const first = shipments.data?.[0]?.id

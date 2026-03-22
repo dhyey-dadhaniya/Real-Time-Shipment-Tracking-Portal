@@ -21,8 +21,8 @@ export function MarketplacePage() {
       <div>
         <div className="text-xl font-semibold">Marketplace</div>
         <div className="mt-1 text-sm text-[rgb(var(--muted))]">
-          Shippers post loads; carriers browse open shipments and bid. Integrated with Spring Boot REST
-          APIs.
+          Shippers post loads; carriers browse open work and submit bids. Accept a bid when you are ready to
+          assign a carrier.
         </div>
       </div>
 
@@ -33,7 +33,7 @@ export function MarketplacePage() {
       {m.isShipper ? (
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader title="Post a shipment" subtitle="POST /api/shipments" />
+            <CardHeader title="Post a shipment" subtitle="Add a new load to the marketplace" />
             <CardBody>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
@@ -75,10 +75,12 @@ export function MarketplacePage() {
           </Card>
 
           <Card>
-            <CardHeader title="Bids on selected shipment" subtitle="GET /api/bids/shipment/{id}" />
+            <CardHeader title="Bids on selected shipment" subtitle="Review offers on the shipment you selected" />
             <CardBody>
               <p className="text-sm text-[rgb(var(--muted))]">
-                Select a row from your shipments, then accept a pending bid.
+                The first shipment in <strong>Your shipments</strong> is selected automatically. Click
+                another row to switch. Pending bids appear in the <strong>Bids</strong> panel below — accept
+                one there.
               </p>
             </CardBody>
           </Card>
@@ -87,7 +89,7 @@ export function MarketplacePage() {
 
       {m.isCarrier ? (
         <Card>
-          <CardHeader title="Place a bid" subtitle="POST /api/bids" />
+          <CardHeader title="Place a bid" subtitle="Offer your price on the selected shipment" />
           <CardBody>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -116,7 +118,7 @@ export function MarketplacePage() {
 
       {m.isCarrier && m.myBids.data.length > 0 ? (
         <Card>
-          <CardHeader title="My bids" subtitle="GET /api/bids" />
+          <CardHeader title="My bids" subtitle="Bids you have already submitted" />
           <CardBody>
             <div className="space-y-2">
               {m.myBids.data.map((b) => (
@@ -139,7 +141,9 @@ export function MarketplacePage() {
         <Card>
           <CardHeader
             title={m.isCarrier ? 'Open shipments' : 'Your shipments'}
-            subtitle={m.isCarrier ? 'GET /api/marketplace/shipments' : 'GET /api/shipments'}
+            subtitle={
+              m.isCarrier ? 'Shipments open for bidding' : 'Shipments you have posted'
+            }
             right={
               <Button size="sm" variant="secondary" onClick={() => m.refreshBoard()} isLoading={m.boardLoading}>
                 Refresh
@@ -165,11 +169,22 @@ export function MarketplacePage() {
                   return (
                     <tr
                       key={row.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-selected={active}
                       className={[
                         'cursor-pointer',
-                        active ? 'bg-[rgb(var(--primary-2))]/5' : 'hover:bg-black/5 dark:hover:bg-white/5',
+                        active
+                          ? 'bg-[rgb(var(--primary-2))]/10 ring-2 ring-inset ring-[rgb(var(--primary-2))]/40'
+                          : 'hover:bg-black/5 dark:hover:bg-white/5',
                       ].join(' ')}
                       onClick={() => m.setSelectedShipmentId(row.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          m.setSelectedShipmentId(row.id)
+                        }
+                      }}
                     >
                       <TD className="font-medium">{row.id}</TD>
                       <TD className="text-[rgb(var(--muted))]">

@@ -12,8 +12,9 @@ export function DashboardPage() {
       <div className="mx-auto max-w-[1400px] space-y-4">
         <div className="text-xl font-semibold">Dashboard</div>
         <p className="text-sm text-[rgb(var(--muted))]">
-          The dashboard uses your shipper shipments API. Sign in as a <strong>SHIPPER</strong> to see
-          KPIs, or open <strong>Marketplace</strong> / <strong>Carriers</strong> for carrier flows.
+          This overview is for shippers. Sign in as a <strong>SHIPPER</strong> to see KPIs and recent
+          activity, or use <strong>Marketplace</strong> / <strong>Carrier Management</strong> for carrier
+          tools.
         </p>
       </div>
     )
@@ -25,7 +26,7 @@ export function DashboardPage() {
         <div>
           <div className="text-xl font-semibold">Dashboard</div>
           <div className="mt-1 text-sm text-[rgb(var(--muted))]">
-            Data from <code className="text-xs">GET /api/shipments</code> (Spring Boot).
+            Summary of your posted shipments and their status.
           </div>
         </div>
         <Button size="sm" variant="secondary" onClick={() => void refetch()} isLoading={dashboard.loading}>

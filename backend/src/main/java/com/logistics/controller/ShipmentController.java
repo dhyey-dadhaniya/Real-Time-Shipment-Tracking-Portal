@@ -2,7 +2,9 @@ package com.logistics.controller;
 
 import com.logistics.dto.CreateShipmentRequest;
 import com.logistics.dto.ShipmentResponse;
+import com.logistics.dto.TrackingUpdateResponse;
 import com.logistics.service.ShipmentService;
+import com.logistics.service.TrackingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import java.util.List;
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
+    private final TrackingService trackingService;
 
     @PostMapping
     public ResponseEntity<ShipmentResponse> create(@Valid @RequestBody CreateShipmentRequest request) {
@@ -40,5 +43,10 @@ public class ShipmentController {
     @GetMapping("/track/{trackingId}")
     public ResponseEntity<ShipmentResponse> track(@PathVariable String trackingId) {
         return ResponseEntity.ok(shipmentService.getByTrackingId(trackingId));
+    }
+
+    @GetMapping("/track/{trackingId}/history")
+    public ResponseEntity<List<TrackingUpdateResponse>> publicTrackingHistory(@PathVariable String trackingId) {
+        return ResponseEntity.ok(trackingService.getPublicHistoryByTrackingId(trackingId));
     }
 }

@@ -11,7 +11,7 @@ interface DashboardRecentTableProps {
 export function DashboardRecentTable({ rows, loading }: DashboardRecentTableProps) {
   return (
     <Card>
-      <CardHeader title="Recent Shipments" subtitle="Latest from /api/shipments" />
+      <CardHeader title="Recent Shipments" subtitle="Your most recently updated loads" />
       <CardBody>
         <Table>
           <THead>

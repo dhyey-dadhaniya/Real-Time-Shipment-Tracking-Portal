@@ -23,7 +23,10 @@ function normalizeError(error: unknown): Error {
     if (typeof responseData === 'string' && responseData.trim() !== '') {
       e.message = responseData
     } else if (responseData && typeof responseData === 'object') {
-      if (typeof responseData.message === 'string') {
+      const withError = responseData as { error?: string; message?: string }
+      if (typeof withError.error === 'string' && withError.error.trim() !== '') {
+        e.message = withError.error
+      } else if (typeof responseData.message === 'string') {
         e.message = responseData.message
       } else if (Array.isArray(responseData.errors) && responseData.errors.length > 0) {
         const first = responseData.errors[0]
@@ -66,7 +69,8 @@ apiClient.interceptors.response.use(
     const reqUrl = String((error as AxiosError).config?.url ?? '')
     const isAuthRoute =
       reqUrl.includes('/api/auth/login') || reqUrl.includes('/api/auth/register')
-    if (error.response?.status === 401 && !isAuthRoute) {
+    const isPublicTrackRoute = reqUrl.includes('/api/shipments/track/')
+    if (error.response?.status === 401 && !isAuthRoute && !isPublicTrackRoute) {
       removeAccessToken()
       if (!window.location.pathname.startsWith('/login')) {
         window.location.href = '/login'

@@ -53,6 +53,12 @@ export function LoginForm({
               Register
             </Link>
           </p>
+          <p className="text-center text-sm text-[rgb(var(--muted))]">
+            Tracking only?{' '}
+            <Link className="text-[rgb(var(--primary-2))] underline" to={ROUTES.PUBLIC_TRACK}>
+              Track a shipment
+            </Link>
+          </p>
         </div>
       </CardBody>
     </Card>

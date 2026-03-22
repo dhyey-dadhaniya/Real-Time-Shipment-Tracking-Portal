@@ -91,5 +91,26 @@ public class TrackingService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Public tracking page: history by customer-facing tracking ID (no authentication).
+     */
+    @Transactional(readOnly = true)
+    public List<TrackingUpdateResponse> getPublicHistoryByTrackingId(String trackingId) {
+        Shipment shipment = shipmentRepository.findByTrackingId(trackingId)
+                .orElseThrow(() -> new IllegalArgumentException("Shipment not found: " + trackingId));
+        return trackingPointRepository.findTop200ByShipmentIdOrderByCreatedAtDesc(shipment.getId())
+                .stream()
+                .map(p -> TrackingUpdateResponse.builder()
+                        .shipmentId(shipment.getId())
+                        .trackingId(shipment.getTrackingId())
+                        .latitude(p.getLatitude())
+                        .longitude(p.getLongitude())
+                        .statusMessage(p.getStatusMessage())
+                        .shipmentStatus(shipment.getStatus())
+                        .updatedAt(p.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }
 

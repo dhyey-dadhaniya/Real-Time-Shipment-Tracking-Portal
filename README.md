@@ -1,55 +1,104 @@
 # Real-Time Shipment Tracking Portal
 
-Logistics marketplace: shippers post loads, carriers bid, customers track shipments in real time.  
-**(Internship Project – Task 3)**
+A full-stack logistics platform where shippers publish loads, carriers bid and operate assigned shipments, and stakeholders monitor movement on a **Leaflet** map with optional **STOMP/WebSocket** live updates.
 
----
+## Features
 
-## Four-week roadmap
+- **Authentication** — JWT-based API security; role separation (shipper / carrier).
+- **Marketplace** — Carriers discover open loads and submit bids.
+- **Operations** — Shippers accept bids; carriers update shipment status and publish GPS checkpoints.
+- **Tracking** — REST history plus broker broadcasts on `/topic/shipments/{shipmentId}`.
+- **Public tracking** — No account required: open `/track/{trackingId}` using the shipment’s public tracking code (`GET /api/shipments/track/{trackingId}` and `/history`).
 
-| Week   | Focus |
+## Architecture
+
+| Layer | Stack |
 |--------|--------|
-| **Week 1** | Marketplace schema, auth (JWT), REST APIs — see **WEEK1_README.md** |
-| **Week 2** | Load board & bidding logic (accept bid, lock shipment) — backend |
-| **Week 3** | WebSocket + live GPS tracking (broadcast by shipment) — backend |
-| **Week 4** | React dashboard, map UI, testing, README — frontend & wrap-up |
+| API | Spring Boot 3, Spring Security, JPA, PostgreSQL |
+| Real-time | Spring WebSocket / STOMP, simple broker |
+| UI | React 19, TypeScript, Vite, Tailwind, react-leaflet |
 
----
+Detailed WebSocket design: [docs/WEBSOCKET_ARCHITECTURE.md](docs/WEBSOCKET_ARCHITECTURE.md).
 
-## Project overview (common for backend & frontend)
-
-| Part     | Description                    |
-|----------|--------------------------------|
-| Backend  | Spring Boot API (Week 1–3: auth, shipments, bids, WebSocket) |
-| Frontend | React dashboard (Week 4: tracking + map, WebSocket)        |
-
----
-
-## Repository structure
+## Repository layout
 
 ```
-Real-Time-Shipment-Tracking-Portal/
-├── backend/          # Spring Boot API (Week 1–3) — see backend/README.md
-├── frontend/         # React app (Week 4) — see frontend/README.md
-├── README.md         # This file (project overview)
-└── WEEK1_README.md   # Week 1 API & day-wise plan
+├── backend/          # Spring Boot application
+├── frontend/         # Vite + React SPA
+├── docs/             # Architecture and integration notes
+└── WEEK1_README.md   # Supplementary API reference (early milestones)
 ```
 
----
+## Prerequisites
 
-## How to run
+- **JDK 17+**
+- **Node.js 20+** (or current LTS)
+- **PostgreSQL** (local database for development)
 
-| Part     | Command / doc                    |
-|----------|-----------------------------------|
-| Backend  | `cd backend` then `mvn spring-boot:run` — see **backend/README.md** |
-| Frontend | `cd frontend` then `npm install` & `npm run dev` — see **frontend/README.md** |
+## Configuration
 
-Backend API: **http://localhost:8080**
+- **Backend** — `backend/.env` or environment variables: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` (see [backend/README.md](backend/README.md)).
+- **Frontend** — `frontend/.env`: `VITE_API_BASE_URL` (e.g. `http://localhost:8080/` for direct API calls, or leave empty to use the Vite dev proxy).
 
----
+## Run locally
 
-## Docs
+**API**
 
-- **WEEK1_README.md** — Week 1 implementation details (schema, auth, API).
-- **backend/README.md** — Backend (Week 1–3) setup, config, API, WebSocket.
-- **frontend/README.md** — Frontend (Week 4) setup and planned features.
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+Default: `http://localhost:8080`
+
+**Web app**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Dev server proxies `/api` and `/ws` to the backend (see `frontend/vite.config.ts`).
+
+## Automated tests
+
+**Backend (JUnit 5)**
+
+```bash
+cd backend
+mvn test
+```
+
+Uses the `test` profile with an in-memory **H2** database (`src/test/resources/application-test.properties`).
+
+**Frontend (Vitest)**
+
+```bash
+cd frontend
+npm test
+```
+
+**CI** — On push and pull request, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs backend tests and frontend build/tests.
+
+## API highlights
+
+| Use case | Method & path |
+|----------|----------------|
+| Register / login | `POST /api/auth/register`, `POST /api/auth/login` |
+| Public shipment snapshot | `GET /api/shipments/track/{trackingId}` |
+| Public GPS history | `GET /api/shipments/track/{trackingId}/history` |
+| Authenticated history | `GET /api/tracking/shipments/{id}/history` |
+| Carrier GPS update | `POST /api/tracking/shipments/{id}` |
+
+Full Week-1 style reference: [WEEK1_README.md](WEEK1_README.md).
+
+## Documentation
+
+- [backend/README.md](backend/README.md) — Data model, security, REST and WebSocket entry points.
+- [frontend/README.md](frontend/README.md) — UI modules, env vars, STOMP client behavior.
+- [docs/WEBSOCKET_ARCHITECTURE.md](docs/WEBSOCKET_ARCHITECTURE.md) — Topics, JWT on `CONNECT`, reconnection.
+
+## License
+
+This project is provided as sample / coursework source. Add a `LICENSE` file if you distribute it.

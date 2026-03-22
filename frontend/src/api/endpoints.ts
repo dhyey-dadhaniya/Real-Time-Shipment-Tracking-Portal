@@ -11,6 +11,8 @@ export const API_ENDPOINTS = {
     CREATE: '/api/shipments',
     BY_ID: (id: number | string) => `/api/shipments/${id}`,
     TRACK: (trackingId: string) => `/api/shipments/track/${encodeURIComponent(trackingId)}`,
+    TRACK_HISTORY: (trackingId: string) =>
+      `/api/shipments/track/${encodeURIComponent(trackingId)}/history`,
   },
   MARKETPLACE: {
     SHIPMENTS: '/api/marketplace/shipments',

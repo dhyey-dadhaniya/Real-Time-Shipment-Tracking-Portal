@@ -22,9 +22,8 @@ export function CarrierManagementPage() {
       <div className="mx-auto max-w-[1400px] space-y-4">
         <div className="text-xl font-semibold">Carrier assignments</div>
         <p className="text-sm text-[rgb(var(--muted))]">
-          This screen uses <code className="text-xs">GET /api/carrier/shipments</code> and{' '}
-          <code className="text-xs">POST /api/operations/shipments/&#123;id&#125;/status</code>. Sign in as a{' '}
-          <strong>CARRIER</strong>.
+          Manage jobs assigned to you and move shipments through pickup, in transit, and delivered. Sign in
+          as a <strong>CARRIER</strong>.
         </p>
       </div>
     )
@@ -35,14 +34,14 @@ export function CarrierManagementPage() {
       <div>
         <div className="text-xl font-semibold">Carrier management</div>
         <div className="mt-1 text-sm text-[rgb(var(--muted))]">
-          Assigned shipments and lifecycle updates (Spring Boot).
+          Update status as you progress through each assigned shipment.
         </div>
       </div>
 
       <Card>
         <CardHeader
           title="My assigned shipments"
-          subtitle="GET /api/carrier/shipments"
+          subtitle="Jobs currently assigned to your account"
           right={
             <Button size="sm" variant="secondary" onClick={() => void c.refetch()} isLoading={c.loading}>
               Refresh

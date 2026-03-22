@@ -14,6 +14,20 @@ Spring Boot API for the logistics marketplace. Covers **Week 1** (schema & auth)
 | Security   | Spring Security + JWT    |
 | Data       | Spring Data JPA          |
 | Build      | Maven                    |
+| Real-time  | Spring WebSocket + STOMP (`/ws`, `/topic/...`) |
+
+---
+
+## WebSocket & STOMP (Week 3–4)
+
+- **Endpoint:** `ws://<host>:8080/ws` (browser dev often uses Vite proxy: `ws://localhost:5173/ws` → 8080).
+- **Broker:** Simple in-memory broker, application prefix `/app`, broker destination prefix `/topic`.
+- **Live topic:** `/topic/shipments/{shipmentId}` — payload is JSON `TrackingUpdateResponse` after each `POST /api/tracking/shipments/{id}`.
+- **Auth:** JWT in STOMP `CONNECT` frame header `Authorization: Bearer <token>` — see `WebSocketAuthChannelInterceptor`.
+
+**Code:** `config/WebSocketConfig.java`, `config/WebSocketAuthChannelInterceptor.java`, `service/TrackingService.java` (`SimpMessagingTemplate#convertAndSend`).
+
+**Full architecture write-up (PDF Week 4):** [../docs/WEBSOCKET_ARCHITECTURE.md](../docs/WEBSOCKET_ARCHITECTURE.md)
 
 ---
 
@@ -76,7 +90,7 @@ Defaults in `src/main/resources/application.properties`. Override with env:
 
 ```
 src/main/java/com/logistics/
-├── config/          # Security config
+├── config/          # Security, WebSocket/STOMP (`WebSocketConfig`)
 ├── controller/      # REST (auth, shipments, bids, marketplace)
 ├── dto/             # Request/Response DTOs
 ├── entity/          # JPA entities (User, Shipment, Bid)
