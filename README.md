@@ -90,6 +90,7 @@ npm run dev
 
 App: [http://localhost:5173](http://localhost:5173) (or next free port)
 
+
 ## ▶️ Usage
 
 * Register as shipper or carrier, then log in.
@@ -99,7 +100,13 @@ App: [http://localhost:5173](http://localhost:5173) (or next free port)
 
 ## 📸 Screenshots
 
-image.jpg
+## carriers
+<img width="1917" height="822" alt="image" src="https://github.com/user-attachments/assets/19dc35e8-3939-4192-9a54-a6a488e8dc73" />
+
+## shippers
+![image](https://github.com/user-attachments/assets/9150a709-b5a7-42ee-9a22-bce97f4dd3fc)
+
+
 
 
 ## 🧪 Testing
