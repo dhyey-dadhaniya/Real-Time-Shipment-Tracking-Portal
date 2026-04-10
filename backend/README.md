@@ -1,156 +1,135 @@
-# Real-Time Shipment Tracking Portal – Frontend
+# Backend – Real-Time Shipment Tracking Portal
 
-A React single-page application built with TypeScript and Vite, styled with Tailwind CSS. It consumes the Spring Boot REST API for logistics workflows (dashboard, shipments, marketplace, carriers) and uses **STOMP over WebSocket** with **Leaflet** for live carrier tracking maps. The stack emphasizes type-safe API access, route-based code organization, and Vitest for unit tests on critical helpers.
+Spring Boot API for the logistics marketplace. Covers **Week 1** (schema & auth), **Week 2** (load board & bidding), and **Week 3** (WebSocket & live tracking).
 
-## 🏗️ Architecture
+---
 
-The app follows a typical SPA + API pattern:
+## Tech stack
 
-```
-Browser (React) → Vite dev server (same origin) → proxy /api & /ws → Spring Boot backend
-```
+| Component   | Technology              |
+|------------|-------------------------|
+| Language   | Java 17                 |
+| Framework  | Spring Boot 3.x          |
+| Database   | PostgreSQL               |
+| Security   | Spring Security + JWT    |
+| Data       | Spring Data JPA          |
+| Build      | Maven                    |
+| Real-time  | Spring WebSocket + STOMP (`/ws`, `/topic/...`) |
 
-- **Vite**: Dev server and production build; `vite.config.ts` proxies `/api` and `/ws` to the backend during development so the browser calls same-origin URLs.
-- **React Router**: Client-side routing; protected routes wrap authenticated areas.
-- **REST**: Axios-based client (`src/api/`) with `VITE_API_BASE_URL` pointing at the API (e.g. `http://localhost:8080/api/`).
-- **Real-time**: `@stomp/stompjs` connects to `/ws`, subscribes to `/topic/shipments/{id}` with `Authorization: Bearer <JWT>`; see **[../docs/WEBSOCKET_ARCHITECTURE.md](../docs/WEBSOCKET_ARCHITECTURE.md)** for sequence diagrams and security notes.
+---
 
-| Area | Implementation |
-|------|------------------|
-| Dashboard & maps | Shipper tracking, carrier real-time page, marketplace, etc. |
-| Map | `react-leaflet` + OpenStreetMap tiles |
-| Live updates | `useRealtimeTrackingPage` — STOMP subscribe; REST `GET /api/tracking/shipments/{id}/history` bootstraps the polyline |
-| Resilience | Exponential reconnect, heartbeats, manual **Reconnect WebSocket**; UI states **Live / Reconnecting / Error** |
+## WebSocket & STOMP (Week 3–4)
 
-**Live tracking hook:** `src/hooks/realtime-tracking/useRealtimeTrackingPage.ts` — CONNECT headers match server `WebSocketAuthChannelInterceptor`; auto-reconnect with capped delay; intentional close on unmount.
+- **Endpoint:** `ws://<host>:8080/ws` (browser dev often uses Vite proxy: `ws://localhost:5173/ws` → 8080).
+- **Broker:** Simple in-memory broker, application prefix `/app`, broker destination prefix `/topic`.
+- **Live topic:** `/topic/shipments/{shipmentId}` — payload is JSON `TrackingUpdateResponse` after each `POST /api/tracking/shipments/{id}`.
+- **Auth:** JWT in STOMP `CONNECT` frame header `Authorization: Bearer <token>` — see `WebSocketAuthChannelInterceptor`.
 
-## 🚀 Getting Started
+**Code:** `config/WebSocketConfig.java`, `config/WebSocketAuthChannelInterceptor.java`, `service/TrackingService.java` (`SimpMessagingTemplate#convertAndSend`).
 
-### Prerequisites
+**Full architecture write-up (PDF Week 4):** [../docs/WEBSOCKET_ARCHITECTURE.md](../docs/WEBSOCKET_ARCHITECTURE.md)
 
-- **Node.js**: 20+ (LTS recommended; align with your team’s version)
-- **npm**: >= 10.0.0
-- **Backend**: Spring Boot API running (see `../backend/README.md`)
+---
 
-### Installation
+## Prerequisites
 
-```bash
-cd frontend
-npm install
-```
+- **Java 17**
+- **Maven**
+- **PostgreSQL** (DB created, e.g. `shipment_tracking`)
 
-### Environment Setup
+---
 
-Create your environment file from the example (if present) or add `.env` in `frontend/`:
+## Run
 
-```env
-# Base URL for REST calls (include trailing slash if your client expects it)
-VITE_API_BASE_URL=http://localhost:8080/api/
-```
-
-WebSocket traffic uses **`/ws`** on the **same origin** as the Vite dev server; the proxy forwards it to the backend.
-
-## 💻 Development
-
-### Start Development Server
+From project root:
 
 ```bash
-npm run dev
+cd backend
+mvn clean install
+mvn spring-boot:run
 ```
 
-- Serves the app (default **http://localhost:5173**, or next free port).
-- Hot module replacement via Vite.
-
-### Build
+Or from `backend/` directly:
 
 ```bash
-npm run build
+mvn spring-boot:run
 ```
 
-Runs `tsc -b` then `vite build` for production assets.
+API base: **http://localhost:8080**
 
-### Preview Production Build
+---
 
-```bash
-npm run preview
+## Configuration
+
+Defaults in `src/main/resources/application.properties`. Override with env:
+
+- `DB_URL` – e.g. `jdbc:postgresql://localhost:5432/shipment_tracking`
+- `DB_USERNAME` – DB user
+- `DB_PASSWORD` – DB password
+- `JWT_SECRET` – min 32 chars in production
+
+---
+
+## Quick API check
+
+- **Register (Shipper):**  
+  `POST /api/auth/register`  
+  Body: `{ "name": "Test Shipper", "email": "shipper@test.com", "password": "password123", "role": "SHIPPER" }`
+
+- **Login:**  
+  `POST /api/auth/login`  
+  Body: `{ "email": "shipper@test.com", "password": "password123" }`  
+  Use returned `token`: `Authorization: Bearer <token>`
+
+- **Public tracking:**  
+  `GET /api/shipments/track/{trackingId}` (no auth)
+
+---
+
+## Folder structure
+
 ```
-
-Ensure `/api` and `/ws` still reach the backend (env, reverse proxy, or same proxy setup as production).
-
-### Tests
-
-```bash
-npm run test        # single run (Vitest)
-npm run test:watch  # watch mode
-```
-
-## 📁 Project Structure
-
-```
-frontend/
-├── index.html                 # Vite HTML shell
-├── package.json               # Dependencies & scripts
-├── package-lock.json
-├── vite.config.ts             # Dev server; proxy `/api` and `/ws` to backend
-├── vitest.config.ts           # Unit tests (e.g. API helpers)
-├── eslint.config.js           # ESLint (flat config)
-├── tsconfig.json
-├── tsconfig.app.json
-├── tsconfig.node.json
+backend/
+├── pom.xml                              # Maven build and dependencies
+├── .env.example                         # Example env vars (copy to `.env` locally)
 ├── README.md
-├── .env                       # Local env (not committed); `VITE_*` variables
-└── src/
-    ├── main.tsx               # React root
-    ├── index.css              # Global styles (Tailwind)
-    ├── router.tsx             # Route definitions
-    ├── App/
-    │   └── index.tsx          # App shell
-    ├── api/                   # Axios client, REST paths, tests
-    │   ├── client.ts
-    │   ├── endpoints.ts
-    │   ├── endpoints.test.ts
-    │   └── index.ts
-    ├── components/
-    │   ├── features/          # Domain UI (auth forms, dashboard widgets)
-    │   │   ├── auth/
-    │   │   └── dashboard/
-    │   ├── layout/            # Protected routes, home redirect
-    │   ├── navigation/        # Sidebar, top nav, nav items
-    │   └── ui/                # Shared primitives (Button, Card, Table, …)
-    ├── config/
-    │   └── env.ts             # Typed env access
-    ├── constants/
-    │   └── routes.ts
-    ├── contexts/              # Auth & toast providers
-    ├── hooks/                 # Page logic and shared hooks
-    │   ├── auth/
-    │   ├── carrier-management/
-    │   ├── dashboard/
-    │   ├── marketplace/
-    │   ├── realtime-tracking/ # STOMP live map
-    │   ├── shipment-tracking/
-    │   ├── useApi.ts
-    │   └── useToast.ts
-    ├── layouts/               # App layout vs auth layout
-    ├── pages/                 # Route screens; `pages/auth/` for login/register
-    ├── services/
-    │   └── leafletFix.ts      # Leaflet/CSS integration helpers
-    ├── store/
-    │   └── uiStore.ts
-    ├── types/                 # Shared TypeScript types
-    └── utils/                 # API URL resolution, geocode, auth helpers, …
+├── src/
+│   ├── main/
+│   │   ├── java/com/logistics/
+│   │   │   ├── ShipmentTrackingApplication.java   # Spring Boot entry point
+│   │   │   ├── config/                            # Security, WebSocket/STOMP
+│   │   │   │   ├── SecurityConfig.java
+│   │   │   │   ├── WebSocketConfig.java
+│   │   │   │   └── WebSocketAuthChannelInterceptor.java
+│   │   │   ├── controller/                        # REST endpoints
+│   │   │   │   ├── AuthController.java
+│   │   │   │   ├── BidController.java
+│   │   │   │   ├── CarrierController.java
+│   │   │   │   ├── MarketplaceController.java
+│   │   │   │   ├── OperationsController.java
+│   │   │   │   ├── ShipmentController.java
+│   │   │   │   └── TrackingController.java
+│   │   │   ├── dto/                               # Request/response DTOs
+│   │   │   ├── entity/                            # JPA entities (User, Shipment, Bid, …)
+│   │   │   ├── exception/                         # GlobalExceptionHandler
+│   │   │   ├── repository/                        # Spring Data JPA repositories
+│   │   │   ├── security/                          # JWT filter, provider, user details
+│   │   │   └── service/                           # Business logic
+│   │   └── resources/
+│   │       └── application.properties             # Defaults; override with env vars
+│   └── test/
+│       ├── java/com/logistics/                    # Unit & integration tests
+│       └── resources/
+│           └── application-test.properties        # Test profile (e.g. in-memory DB)
 ```
 
-CI/CD for the monorepo lives under **`.github/workflows/`** at the **repository root** (not inside `frontend/`).
+Repository-wide CI is under **`.github/workflows/`** at the project root (not inside `backend/`).
 
-## 🚨 Code Quality
+---
 
-### Linting
+## Notes
 
-```bash
-npm run lint
-```
-
-Uses ESLint with the flat config in `eslint.config.js`.
-
-This frontend is designed to work with the **Spring Boot** backend in `../backend/` for authentication, shipments, tracking, and WebSocket/STOMP.
+- **Week 1**: Full API & day-wise plan → root **WEEK1_README.md** (paths refer to code under `backend/`).
+- **Week 2**: Accept-bid, lock shipment to AWAITING_PICKUP (backend).
+- **Week 3**: WebSocket/STOMP, GPS endpoint, broadcast by shipment (backend).
+- Do not commit secrets; use env vars for production.
