@@ -133,8 +133,11 @@ export function useRealtimeTrackingPage() {
     intentionalCloseRef.current = false
     setWsState({ status: 'connecting', detail: 'Connecting to live feed…' })
 
-    const wsHost = window.location.host
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${wsHost}/ws`
+    const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '')
+const wsOrigin = apiBase
+  ? apiBase.replace(/^http/, 'ws')
+  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+const wsUrl = `${wsOrigin}/ws`
 
     const client = new Client({
       brokerURL: wsUrl,
